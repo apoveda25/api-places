@@ -18,6 +18,12 @@ app.get("/places", async (req, res) => {
   res.json(findAll._result);
 });
 
+app.get("/places/:key", async (req, res) => {
+  const find = await Places.find({ _key: req.params.key });
+
+  res.json(find);
+});
+
 app.post("/places", async (req, res) => {
   const save = await Places.create({
     title: req.body.title,

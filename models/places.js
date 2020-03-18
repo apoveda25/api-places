@@ -15,6 +15,10 @@ const Place = DB.collection("Places");
 // };
 
 class Places {
+  static async find(filter) {
+    return await Place.firstExample(filter);
+  }
+
   static async findAll() {
     return await Place.all();
   }
