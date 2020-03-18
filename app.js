@@ -12,6 +12,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.get("/places", async (req, res) => {
+  const findAll = await Places.findAll();
+
+  res.json(findAll._result);
+});
+
 app.post("/places", async (req, res) => {
   const save = await Places.create({
     title: req.body.title,

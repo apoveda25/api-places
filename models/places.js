@@ -15,6 +15,10 @@ const Place = DB.collection("Places");
 // };
 
 class Places {
+  static async findAll() {
+    return await Place.all();
+  }
+
   static async create(place) {
     return await Place.save(place);
   }
