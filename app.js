@@ -3,8 +3,7 @@ var express = require("express");
 var path = require("path");
 var logger = require("morgan");
 
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+const Places = require("./models/places");
 
 var app = express();
 
@@ -13,8 +12,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.post("/places", async (req, res) => {
+  const save = await Places.create({
+    title: req.body.title,
+    description: req.body.description,
+    acceptsCreditCard: req.body.acceptsCreditCard,
+    openHour: req.body.openHour,
+    closeHour: req.body.closeHour
+  });
+
+  res.json(save);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
