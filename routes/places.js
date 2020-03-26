@@ -11,8 +11,8 @@ router
 
 router
   .route("/:id")
-  .get(Places.show)
-  .put(Places.update)
-  .delete(Places.destroy);
+  .get(Places.find, Places.show)
+  .put(Places.find, Places.update)
+  .delete(Places.find, Places.destroy);
 
 module.exports = router;

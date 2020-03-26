@@ -1,6 +1,17 @@
 const Places = require("../models/Places");
 
 class PlacesController {
+  static async find(req, res, next) {
+    try {
+      req.place = await Places.findById(req.params.id);
+
+      next();
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+  }
+
   static async index(req, res) {
     try {
       const docs = await Places.paginate(
@@ -33,14 +44,7 @@ class PlacesController {
   }
 
   static async show(req, res) {
-    try {
-      const doc = await Places.findById(req.params.id);
-
-      res.json(doc);
-    } catch (error) {
-      console.error(error);
-      res.json(error);
-    }
+    res.json(req.place);
   }
 
   static async update(req, res) {
@@ -52,17 +56,17 @@ class PlacesController {
         "openHours",
         "closeHour"
       ];
-      const place = {};
+      const params = {};
 
       attributes.map(attr => {
         if (req.body.hasOwnProperty(attr)) {
-          place[attr] = req.body[attr];
+          params[attr] = req.body[attr];
         }
       });
 
-      const doc = await Places.findOneAndUpdate({ _id: req.params.id }, place, {
-        new: true
-      });
+      req.place = Object.assign(req.place, params);
+
+      const doc = await req.place.save();
 
       res.json(doc);
     } catch (error) {
@@ -73,7 +77,7 @@ class PlacesController {
 
   static async destroy(req, res) {
     try {
-      const doc = await Places.findByIdAndRemove(req.params.id);
+      const doc = await req.place.remove();
 
       res.json(doc);
     } catch (error) {
