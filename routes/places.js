@@ -7,7 +7,7 @@ const Places = require("../controllers/PlacesController");
 router
   .route("/")
   .get(Places.index)
-  .post(Places.create);
+  .post(Places.images, Places.create);
 
 router
   .route("/:id")

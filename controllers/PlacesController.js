@@ -85,6 +85,20 @@ class PlacesController {
       res.json(error);
     }
   }
+
+  static async images(req, res, next) {
+    try {
+      const avatar = req.files.avatar;
+
+      avatar.mv(`./uploads/${avatar.md5}${avatar.name}`, err => {
+        if (err) next(err);
+
+        next();
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = PlacesController;
