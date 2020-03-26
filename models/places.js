@@ -1,31 +1,21 @@
-// const arangojs = require("arangojs");
-// const dbConfig = require("../config/database");
+const mongoose = require("mongoose");
 
-// const DB = new arangojs.Database({
-//   url: dbConfig.url
-// });
-// DB.useDatabase(dbConfig.database);
-// DB.useBasicAuth(dbConfig.username, dbConfig.password);
-const DB = require("../config/database");
+const placeSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
+  },
+  description: String,
+  acceptsCreditCard: {
+    type: Boolean,
+    default: false
+  },
+  coverImage: String,
+  avatarImage: String,
+  openHour: Number,
+  closeHour: Number
+});
 
-const Place = DB.collection("Places");
-
-// exports.create = async place => {
-//   return await Place.save(place);
-// };
-
-class Places {
-  static async find(filter) {
-    return await Place.firstExample(filter);
-  }
-
-  static async findAll() {
-    return await Place.all();
-  }
-
-  static async create(place) {
-    return await Place.save(place);
-  }
-}
+const Places = mongoose.model("Places", placeSchema);
 
 module.exports = Places;
