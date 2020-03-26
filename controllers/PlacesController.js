@@ -3,7 +3,10 @@ const Places = require("../models/Places");
 class PlacesController {
   static async index(req, res) {
     try {
-      const docs = await Places.find({});
+      const docs = await Places.paginate(
+        {},
+        { page: req.query.page || 1, limit: 20, sort: { _id: -1 } }
+      );
 
       res.json(docs);
     } catch (error) {
