@@ -1,9 +1,13 @@
 const Places = require("../models/Places");
+const Uploader = require("../models/Uploader");
 
 class PlacesController {
   static async find(req, res, next) {
     try {
       req.place = await Places.findById(req.params.id);
+
+      if (req.place == null)
+        res.status(404).send({ error: true, msg: "Not Found" });
 
       next();
     } catch (error) {
@@ -33,7 +37,8 @@ class PlacesController {
         description: req.body.description,
         acceptsCreditCard: req.body.acceptsCreditCard,
         openHours: req.body.openHours,
-        closeHour: req.body.closeHour
+        closeHour: req.body.closeHour,
+        avatarImage: req.files.avatar.url
       });
 
       res.json(doc);
@@ -64,11 +69,19 @@ class PlacesController {
         }
       });
 
+      if (req.files) {
+        req.fileNames.forEach(file => {
+          if (req.files.hasOwnProperty(file)) {
+            params[`${file}Image`] = req.files[file].url;
+          }
+        });
+      }
+
       req.place = Object.assign(req.place, params);
 
       const doc = await req.place.save();
 
-      res.json(doc);
+      res.status(200).json(doc);
     } catch (error) {
       console.error(error);
       res.json(error);
@@ -86,15 +99,45 @@ class PlacesController {
     }
   }
 
-  static async images(req, res, next) {
+  static async imagesUpload(req, res, next) {
     try {
-      const avatar = req.files.avatar;
+      req.fileNames = ["avatar", "cover"];
 
-      avatar.mv(`./uploads/${avatar.md5}${avatar.name}`, err => {
-        if (err) next(err);
+      if (req.files) {
+        req.fileNames.forEach(file => {
+          if (req.files.hasOwnProperty(file)) {
+            req.files[file].path = `./uploads/${req.files[file].name}`;
 
-        next();
-      });
+            req.files[file].mv(req.files[file].path, err => {
+              if (err) next(err);
+            });
+          }
+        });
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async cloudinaryUpload(req, res, next) {
+    try {
+      if (req.files) {
+        req.fileNames.forEach(file => {
+          if (req.files.hasOwnProperty(file)) {
+            Uploader(req.files[file].path)
+              .then(data => {
+                req.files[file].url = data;
+
+                next();
+              })
+              .catch(error => {
+                next(error);
+              });
+          }
+        });
+      }
     } catch (error) {
       next(error);
     }
