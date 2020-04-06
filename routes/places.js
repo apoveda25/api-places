@@ -7,7 +7,12 @@ const Places = require("../controllers/PlacesController");
 router
   .route("/")
   .get(Places.index)
-  .post(Places.imagesUpload, Places.cloudinaryUpload, Places.create);
+  .post(
+    Places.imagesUpload,
+    Places.cloudinaryUpload,
+    Places.setSlug,
+    Places.create
+  );
 
 router
   .route("/:id")

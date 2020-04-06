@@ -1,10 +1,23 @@
 const Places = require("../models/Places");
 const Uploader = require("../models/Uploader");
+const Controller = require("./Controller");
 
-class PlacesController {
+const attrBody = [
+  "title",
+  "description",
+  "acceptsCreditCard",
+  "openHour",
+  "closeHour",
+  "address",
+  "slug",
+];
+
+const attrFiles = ["avatar", "cover"];
+
+class PlacesController extends Controller {
   static async find(req, res, next) {
     try {
-      req.place = await Places.findById(req.params.id);
+      req.place = await Places.findOne({ slug: req.params.id });
 
       if (req.place == null)
         res.status(404).send({ error: true, msg: "Not Found" });
@@ -32,13 +45,15 @@ class PlacesController {
 
   static async create(req, res) {
     try {
+      const paramsBody = super.paramsBuilderBody(attrBody, req.body);
+      const paramsFile = req.files
+        ? super.paramsBuilderFile(attrFiles, req.files)
+        : {};
+
       const doc = await Places.create({
-        title: req.body.title,
-        description: req.body.description,
-        acceptsCreditCard: req.body.acceptsCreditCard,
-        openHours: req.body.openHours,
-        closeHour: req.body.closeHour,
-        avatarImage: req.files.avatar.url
+        ...paramsBody,
+        ...paramsFile,
+        _user: req.user.id,
       });
 
       res.json(doc);
@@ -54,30 +69,12 @@ class PlacesController {
 
   static async update(req, res) {
     try {
-      const attributes = [
-        "title",
-        "description",
-        "acceptsCreditCard",
-        "openHours",
-        "closeHour"
-      ];
-      const params = {};
+      const paramsBody = super.paramsBuilderBody(attrBody, req.body);
+      const paramsFile = req.files
+        ? super.paramsBuilderFile(attrFiles, req.files)
+        : {};
 
-      attributes.map(attr => {
-        if (req.body.hasOwnProperty(attr)) {
-          params[attr] = req.body[attr];
-        }
-      });
-
-      if (req.files) {
-        req.fileNames.forEach(file => {
-          if (req.files.hasOwnProperty(file)) {
-            params[`${file}Image`] = req.files[file].url;
-          }
-        });
-      }
-
-      req.place = Object.assign(req.place, params);
+      req.place = Object.assign(req.place, { ...paramsBody, ...paramsFile });
 
       const doc = await req.place.save();
 
@@ -101,14 +98,12 @@ class PlacesController {
 
   static async imagesUpload(req, res, next) {
     try {
-      req.fileNames = ["avatar", "cover"];
-
       if (req.files) {
-        req.fileNames.forEach(file => {
+        attrFiles.forEach((file) => {
           if (req.files.hasOwnProperty(file)) {
             req.files[file].path = `./uploads/${req.files[file].name}`;
 
-            req.files[file].mv(req.files[file].path, err => {
+            req.files[file].mv(req.files[file].path, (err) => {
               if (err) next(err);
             });
           }
@@ -124,22 +119,48 @@ class PlacesController {
   static async cloudinaryUpload(req, res, next) {
     try {
       if (req.files) {
-        req.fileNames.forEach(file => {
+        attrFiles.forEach((file) => {
           if (req.files.hasOwnProperty(file)) {
             Uploader(req.files[file].path)
-              .then(data => {
+              .then((data) => {
                 req.files[file].url = data;
 
                 next();
               })
-              .catch(error => {
+              .catch((error) => {
                 next(error);
               });
           }
         });
       }
+
+      next();
     } catch (error) {
       next(error);
+    }
+  }
+
+  static async setSlug(req, res, next) {
+    try {
+      req.body.slug = super.setSlug(req.body.title);
+      const count = await Places.validateSlugCount(req.body.slug);
+
+      if (!count) PlacesController.setSlug(req.body.slug);
+
+      next();
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
+  }
+
+  static async validateSlugCount(slug) {
+    try {
+      const count = await Places.countDocuments({ slug });
+
+      return count > 0 ? false : true;
+    } catch (error) {
+      return false;
     }
   }
 }
